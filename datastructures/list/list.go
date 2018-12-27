@@ -1,85 +1,148 @@
 package list
 
 type List struct {
-	root *Element
+	root Element
+	size int
 }
 
 type Element struct {
 	prev,next *Element
-	value interface{}
+	Value     interface{}
+	list      *List
+}
+
+func (e *Element) Next () *Element {
+	if e.list != nil && e.next == &e.list.root {
+		return nil
+	}
+
+	return e.next
+}
+
+func (e *Element) Prev () *Element {
+	if e.list != nil && e.prev == &e.list.root {
+		return nil
+	}
+
+	return e.prev
 }
 
 func New() *List {
-	// 初始化根节点
-	root := new(Element)
-	root.prev = root
-	root.next = root
+	return new(List).Init()
+}
 
-	list := &List {root: root}
+// 初始化函数
+func (this *List) Init () *List {
+	this.root.prev = &this.root
+	this.root.next = &this.root
+	this.size = 0
+	return this
+}
 
-	return list
+// 插入节点到指定节点的下一位
+func (this *List) insert (e, at *Element) *Element {
+	n := at.next
+	at.next = e
+	e.prev = at
+	e.next = n
+	n.prev = e
+	e.list = this
+	this.size++
+	return e
+}
+
+// 删除节点
+func (this *List) remove(e *Element) *Element {
+	e.prev.next = e.next
+	e.next.prev = e.prev
+	e.next = nil
+	e.prev = nil
+	e.list = nil
+	this.size--
+	return e
 }
 
 // 从尾部插入
-func (this *List) Append (value interface{}) {
-	element := &Element {
-		value: value,
-		prev : this.root.prev,
-		next : this.root,
-	}
-
-	// 之前最后一个的下一节点设置为插入节点
-	element.prev.next = element
-	this.root.prev = element
+func (this *List) Push (value interface{}) {
+	this.insert(&Element{Value: value}, this.root.prev)
 }
 
 // 从首部插入
-func (this *List) PushFront (value interface{}) {
-	element := &Element {
-		value: value,
-		prev : this.root,
-		next : this.root.next,
-	}
-
-	// 之前首部的上一节点设置为插入节点
-	element.next.prev = element
-	this.root.next = element
+func (this *List) Unshift (value interface{}) {
+	this.insert(&Element{Value: value}, &this.root)
 }
 
 // 从弹出尾部最后一个节点
 func (this *List) Pop () interface{} {
-	// 取出尾部节点
-	element := this.root.prev
-	// 如果尾部节点的上一节点为root节点,说明链表内数据清空
-	if (element == this.root) {
-		return element.value
+	if this.size == 0 {
+		return nil
 	}
 
-	this.root.prev = element.prev
-	element.prev.next = element.next
-
-	return element.value
+	return this.remove(this.root.prev).Value
 }
 
 // 弹出首部第一个节点
 func (this *List) Shift () interface{} {
-	// 取出首部节点
-	element := this.root.next
-	// 如果首部节点的下一节点为root节点,说明链表内数据清空
-	if (element == this.root) {
-		return element.value
+	if this.size == 0 {
+		return nil
 	}
 
-	this.root.next = element.next
-	element.next.prev = element.prev
-
-	return element.value
+	return this.remove(this.root.next).Value
 }
 
-func (this *List) Top () interface{} {
-	return this.root.next.value
+// 获取链表长度
+func (this *List) Size() int {
+	return this.size
 }
 
-func (this *List) End () interface{} {
-	return this.root.prev.value
+// 获取首位
+func (this *List) Front() *Element {
+	return this.root.next
+}
+
+// 获取末位
+func (this *List) Back() *Element {
+	return this.root.prev
+}
+
+// 将节点插入到首位
+func (this *List) MoveToFront(e *Element) {
+	// 检查节点是否在当前链表中,以及链表首个节点是否为当前节点
+	if e.list != this || this.root.next == e {
+		return
+	}
+	// 将节点从链表删除后再插入
+	this.insert(this.remove(e), &this.root)
+}
+
+// 将节点插入到末位
+func (this *List) MoveToBack(e *Element) {
+	// 检查节点是否在当前链表中,以及链表尾部节点是否为当前节点
+	if e.list != this || this.root.prev == e {
+		return
+	}
+	this.insert(this.remove(e), this.root.prev)
+}
+
+// 将节点插入到指定节点的上一位
+func (this *List) MoveBefore(e, mark *Element) {
+	// 检查节点是否在当前链表中
+	if e.list != this || e == mark || mark.list != this {
+		return
+	}
+	this.insert(this.remove(e), mark.prev)
+}
+
+// 将节点插入到指定节点的下一位
+func (this *List) MoveAfter(e, mark *Element) {
+	// 检查节点是否在当前链表中
+	if e.list != this || e == mark || mark.list != this {
+		return
+	}
+	this.insert(this.remove(e), mark)
+}
+
+// 删除节点
+func (this *List) Remove(e *Element) interface{} {
+	return this.remove(e)
 }
