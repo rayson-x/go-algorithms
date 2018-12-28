@@ -62,14 +62,19 @@ func (this *List) remove(e *Element) *Element {
 	return e
 }
 
+// 根据输入值新建一个节点到指定位置
+func (this *List) insertValue(v interface{}, at *Element) *Element {
+	return this.insert(&Element{Value: v}, at)
+}
+
 // 从尾部插入
-func (this *List) Push (value interface{}) {
-	this.insert(&Element{Value: value}, this.root.prev)
+func (this *List) Push (value interface{}) *Element {
+	return this.insertValue(value, this.root.prev)
 }
 
 // 从首部插入
-func (this *List) Unshift (value interface{}) {
-	this.insert(&Element{Value: value}, &this.root)
+func (this *List) Unshift (value interface{}) *Element {
+	return this.insertValue(value, &this.root)
 }
 
 // 从弹出尾部最后一个节点
@@ -97,12 +102,32 @@ func (this *List) Size() int {
 
 // 获取首位
 func (this *List) Front() *Element {
+	if this.size == 0 {
+		return nil
+	}
 	return this.root.next
 }
 
 // 获取末位
 func (this *List) Back() *Element {
+	if this.size == 0 {
+		return nil
+	}
 	return this.root.prev
+}
+
+func (this *List) InsertBefore(v interface{}, mark *Element) *Element {
+	if mark.list != this {
+		return nil
+	}
+	return this.insertValue(v, mark.prev)
+}
+
+func (this *List) InsertAfter(v interface{}, mark *Element) *Element {
+	if mark.list != this {
+		return nil
+	}
+	return this.insertValue(v, mark)
 }
 
 // 将节点插入到首位
